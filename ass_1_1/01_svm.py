@@ -25,7 +25,7 @@ f = -np.ones(len(X))
 
 cv_H = cvxopt.matrix(H.astype(float))
 cv_f = cvxopt.matrix(f.astype(float))
-# constraint: (w_T . xi + b)*yi >= 1 or dummy constraint????? idk
+# constraint: a_i >= 0
 cv_G = cvxopt.matrix(-np.eye(len(X)))
 cv_h = cvxopt.matrix(np.zeros(len(X)))
 # constraint: alpha_i * y_i = 0 -> Ax = 0
