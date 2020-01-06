@@ -8,25 +8,28 @@ plt.style.use('seaborn-whitegrid')
 random.seed(1337)
 
 
-# generate two linearly separable culsters of data
-X, y = make_blobs(n_samples=200, centers=2, n_features=2, random_state=1, shuffle=True, cluster_std=2)
-
-y[y == 0] = -1
-y_orig = y
-
-y = y.reshape(-1, 1).astype(float)
-
-
 class SVM:
-    def __init__(self, C=None):
+    KERNEL_DICT = {
+        'linear': lambda x, y: np.dot(x, y),
+        'rbf': lambda x, y, s: np.exp(-np.linalg.norm(x - y)**2 / (2 * (sigma ** 2)))
+    }
+
+    def __init__(self, kernel=None, C=None):
+        if kernel is None or kernel == 'linear':
+            self.kernel = self.KERNEL_DICT['linear']
+        else:
+            self.kernel = self.KERNEL_DICT[kernel]
         self.C = C
+        if self.C is not None:
+            self.C = float(self.C)
 
     def fit(self, X, y):
         # this represents the ti*tj*(xi_T . xj)
         H = np.zeros((len(X), len(X)))
         for i in range(len(X)):
             for j in range(len(X)):
-                H[i][j] = np.dot(X[i], X[j]) * y[i] * y[j]
+                #H[i][j] = np.dot(X[i], X[j]) * y[i] * y[j]
+                H[i][j] = self.kernel(X[i], X[j]) * y[i] * y[j]
 
         # this is the coefficient matrix of -sum(alpha_i)
         f = -np.ones(len(X))
@@ -54,7 +57,7 @@ class SVM:
         self.b = y[self.S] - np.dot(X[self.S], self.w)
 
     def get_results(self):
-        "Unpack this function into alpha, w, S, b"
+        # Unpack this function into alpha, w, S, b
         return self.alpha, self.w, self.S, self.b
 
     def discriminant(self, alpha, w0, X, t, x):
@@ -72,19 +75,23 @@ class SVM:
         arr: list
         """
 
-        # filters the input array
+        # filters the input array, since support vectors have nonzero lagrange multipliers
         alpha_dict = {}
         for ind, a in enumerate(alpha):
             if a > 1e-4:
                 alpha_dict[ind] = a
 
         arr = []
-        for i in x:
-            s = 0
-            for key in alpha_dict:
-                s += alpha_dict[key] * t[key] * np.dot(X[key].T, i)
-            s += w0
-            arr.append(s)
+        if self.kernel == self.KERNEL_DICT['linear']:  # if kernel is None -> linear kernel
+            for i in x:
+                s = 0
+                for key in alpha_dict:
+                    s += alpha_dict[key] * t[key] * np.dot(X[key].T, i)
+                s += w0
+                arr.append(s)
+        else:
+            # TODO: implement kernel check
+            pass
         return arr
 
     def calc_contour(self, X, t):
@@ -137,6 +144,14 @@ def plot_svm(w, b, X, y):
 
 
 if __name__ == '__main__':
+    # generate two linearly separable culsters of data
+    X, y = make_blobs(n_samples=200, centers=2, n_features=2, random_state=1, shuffle=True, cluster_std=2)
+
+    y[y == 0] = -1
+    y_orig = y
+
+    y = y.reshape(-1, 1).astype(float)
+
     svm = SVM()
     svm.fit(X, y)
     a, w, S, b = svm.get_results()
