@@ -12,7 +12,7 @@ class SVM:
     KERNEL_DICT = {
         'linear': lambda x, y: np.dot(x, y),
         # GAUSSIAN RBF
-        'gaussian-kernel': lambda x, y, s=4: np.exp(-np.linalg.norm(x - y)**2 / (2 * (s ** 2))),
+        'gaussian-kernel': lambda x, y, s=1: np.exp(-np.linalg.norm(x - y)**2 / (2 * (s ** 2))),
         # POLYNOMIAL KERNEL
         'polynomial-kernel': lambda x, y, p: (np.dot(x, y) + 1) ** p
     }
@@ -143,7 +143,7 @@ class SVM:
         return X_coords, Y_coords, np.array(Z).ravel().reshape(X_coords.shape)
 
 
-def plot_svm(w, b, X, y):
+def plot_svm(w, b, X, y, axes=True, C=0):
     def f(x, w, b, c=0):
         return (-w[0] * x - b + c) / w[1]
 
@@ -154,24 +154,30 @@ def plot_svm(w, b, X, y):
     a1 = f(a0, w, b)
     b0 = 4
     b1 = f(b0, w, b)
-    #plt.plot([a0, b0], [a1[0], b1[0]], "k")
-    ax.plot([a0, b0], [a1[0], b1[0]], "k")
+    if not axes:
+        plt.plot([a0, b0], [a1[0], b1[0]], "k")
+    else:
+        ax.plot([a0, b0], [a1[0], b1[0]], "k")
 
     # w.x + b = 1
     a0 = -15.0
     a1 = f(a0, w, b, 1)
     b0 = 4
     b1 = f(b0, w, b, 1)
-    #plt.plot([a0, b0], [a1[0], b1[0]], "k--")
-    ax.plot([a0, b0], [a1[0], b1[0]], "k--")
+    if not axes:
+        plt.plot([a0, b0], [a1[0], b1[0]], "k--")
+    else:
+        ax.plot([a0, b0], [a1[0], b1[0]], "k--")
 
     # w.x + b = -1
     a0 = -15.0
     a1 = f(a0, w, b, -1)
     b0 = 4
     b1 = f(b0, w, b, -1)
-    #plt.plot([a0, b0], [a1[0], b1[0]], "k--")
-    ax.plot([a0, b0], [a1[0], b1[0]], "k--")
+    if not axes:
+        plt.plot([a0, b0], [a1[0], b1[0]], "k--")
+    else:
+        ax.plot([a0, b0], [a1[0], b1[0]], "k--")
 
     #plt.scatter(X[:, 0], X[:, 1], c=y, cmap='winter')
     # plt.show()
@@ -189,6 +195,7 @@ if __name__ == '__main__':
     svm = SVM()
     svm.fit(X, y)
     a, w, S, b = svm.get_results()
+    alphas = a[a > 1e-4]
     print(f'Alpha: {a[a > 1e-4]} \nw: {w.flatten()}\nb: {b[0]}')
 
     #random_point, _ = make_blobs(n_samples=10, centers=2, n_features=2, random_state=1, shuffle=True, cluster_std=1.7)
@@ -206,8 +213,8 @@ if __name__ == '__main__':
     ax.scatter(X[:, 0], X[:, 1], zs=0, zdir='z', c=y_orig, cmap='winter')
     plot_svm(w, b[0], X, y_orig)
     plt.show()
-    """
-    
+
+    """    
     # Plot C-Values -> change ax to plt in plot_svm()
 
 
@@ -262,5 +269,6 @@ if __name__ == '__main__':
     ax = plt.axes()
     A, B, C = rbf.calc_contour(X, y)
     ax.contour(A, B, C)
+
     ax.scatter(X[:, 0], X[:, 1], c=y_orig, cmap='winter')
     plt.show()
