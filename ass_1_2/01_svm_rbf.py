@@ -1,4 +1,4 @@
-from sklearn.datasets.samples_generator import make_blobs
+from sklearn.datasets.samples_generator import make_blobs, make_circles
 import random
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -11,7 +11,10 @@ random.seed(1337)
 class SVM:
     KERNEL_DICT = {
         'linear': lambda x, y: np.dot(x, y),
-        'rbf': lambda x, y, s: np.exp(-np.linalg.norm(x - y)**2 / (2 * (sigma ** 2)))
+        # GAUSSIAN RBF
+        'gaussian-rbf': lambda x, y, s=1: np.exp(-np.linalg.norm(x - y)**2 / (2 * (s ** 2))),
+        # POLYNOMIAL RBF
+        'polynomial-rbf': lambda x, y, p: (np.dot(x, y) + 1) ** p
     }
 
     def __init__(self, kernel=None, C=None):
@@ -44,16 +47,20 @@ class SVM:
         cv_b = cvxopt.matrix(np.zeros(1))
 
         sol = cvxopt.solvers.qp(cv_H, cv_f, cv_G, cv_h, cv_A, cv_b)
+
         self.alpha = np.array(sol['x'])
+
+        # Selecting the set of indices S corresponding to non zero parameters
+        self.S = (self.alpha > 1e-4).flatten()
+        ind = np.arange(len(self.alpha))[self.S]
+
+        self.alpha_filtered = self.alpha[self.S]
 
         # w parameter in vectorized form
         # @: matrix multiplication
         self.w = (np.matmul((y * self.alpha).T, X)).reshape(-1, 1)
 
-        # Selecting the set of indices S corresponding to non zero parameters
-        self.S = (self.alpha > 1e-4).flatten()
-
-        # Computing b
+        # Computing b if kernel is linear
         self.b = y[self.S] - np.dot(X[self.S], self.w)
 
     def get_results(self):
@@ -94,9 +101,24 @@ class SVM:
             pass
         return arr
 
+    def decision_function(self, alpha, X, t, x):
+        alpha_dict = {}
+        for ind, a in enumerate(alpha):
+            if a > 1e-4:
+                alpha_dict[ind] = a
+
+        arr = []
+        for i in x:
+            d = 0
+            for key in alpha_dict:
+                d += alpha_dict[key] * y[key] * self.kernel(X[key], i)
+            arr.append(d)
+
+        return arr
+
     def calc_contour(self, X, t):
-        x_space = np.linspace(-15, 3, 30)
-        y_space = np.linspace(-15, 3, 30)
+        x_space = np.linspace(-20, 10, 50)
+        y_space = np.linspace(-20, 10, 50)
 
         X_coords, Y_coords = np.meshgrid(x_space, y_space)
         X_new = X_coords.ravel()
@@ -105,7 +127,10 @@ class SVM:
         #Z = []
         # for i in range(len(X_new)):
         #    Z.append(list(self.discriminant(self.alpha, self.b[0], X, t, [X_new[i], Y_new[i]])))
-        Z = self.discriminant(self.alpha, self.b[0], X, t, zip(X_new, Y_new))
+        if self.kernel == self.KERNEL_DICT['linear']:
+            Z = self.discriminant(self.alpha, self.b[0], X, t, zip(X_new, Y_new))
+        else:
+            Z = self.decision_function(self.alpha, X, t, zip(X_new, Y_new))
         return X_coords, Y_coords, np.array(Z).ravel().reshape(X_coords.shape)
 
 
@@ -161,6 +186,8 @@ if __name__ == '__main__':
     # res = svm.discriminant(a, b[0], X, y, [-1., 0.])
     # print(res)
 
+
+    # LINEAR
     fig = plt.figure(figsize=(8, 8))
     ax = plt.axes(projection='3d')
     A, B, C = svm.calc_contour(X, y)
@@ -170,4 +197,24 @@ if __name__ == '__main__':
     ax.set_zlabel('z')
     ax.scatter(X[:, 0], X[:, 1], zs=0, zdir='z', c=y_orig, cmap='winter')
     plot_svm(w, b[0], X, y_orig)
+    plt.show()
+
+    # RBF 3D plot
+    rbf = SVM(kernel='gaussian-rbf')
+    rbf.fit(X, y)
+    fig = plt.figure(figsize=(8, 8))
+    ax = plt.axes(projection='3d')
+    A, B, C = rbf.calc_contour(X, y)
+    ax.plot_surface(A, B, C, alpha=0.3)
+    ax.scatter(X[:, 0], X[:, 1], zs=0, zdir='z', c=y_orig, cmap='winter')
+    plt.show()
+
+    # RBF 2d plot
+    rbf = SVM(kernel='gaussian-rbf')
+    rbf.fit(X, y)
+    fig = plt.figure(figsize=(8, 8))
+    ax = plt.axes()
+    A, B, C = rbf.calc_contour(X, y)
+    ax.contour(A, B, C, alpha=0.3)
+    ax.scatter(X[:, 0], X[:, 1], c=y_orig, cmap='winter')
     plt.show()
