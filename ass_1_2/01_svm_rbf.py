@@ -199,7 +199,7 @@ if __name__ == '__main__':
     plt.show()
 
     # RBF 3D plot
-    rbf = SVM(kernel='gaussian-rbf')
+    rbf = SVM(kernel='gaussian-kernel')
     rbf.fit(X, y)
     fig = plt.figure(figsize=(8, 8))
     ax = plt.axes(projection='3d')
@@ -209,7 +209,7 @@ if __name__ == '__main__':
     plt.show()
 
     # RBF 2d plot
-    rbf = SVM(kernel='gaussian-rbf')
+    rbf = SVM(kernel='gaussian-kernel')
     rbf.fit(X, y)
     fig = plt.figure(figsize=(8, 8))
     ax = plt.axes()
