@@ -40,8 +40,17 @@ class SVM:
         cv_H = cvxopt.matrix(H.astype(float))
         cv_f = cvxopt.matrix(f.astype(float))
         # constraint: a_i >= 0
-        cv_G = cvxopt.matrix(-np.eye(len(X)))
-        cv_h = cvxopt.matrix(np.zeros(len(X)))
+        if self.C is None:
+            cv_G = cvxopt.matrix(-np.eye(len(X)))
+            cv_h = cvxopt.matrix(np.zeros(len(X)))
+        else:
+            tmp1 = np.diag(np.ones(len(X)) * -1)
+            tmp2 = np.identity(len(X))
+            cv_G = cvxopt.matrix(np.vstack((tmp1, tmp2)))
+            tmp1 = np.zeros(len(X))
+            tmp2 = np.ones(len(X)) * self.C
+            cv_h = cvxopt.matrix(np.hstack((tmp1, tmp2)))
+            # solve QP problem
         # constraint: alpha_i * y_i = 0 -> Ax = 0
         cv_A = cvxopt.matrix(y.reshape(1, -1).astype(float))
         cv_b = cvxopt.matrix(np.zeros(1))
@@ -197,7 +206,45 @@ if __name__ == '__main__':
     ax.scatter(X[:, 0], X[:, 1], zs=0, zdir='z', c=y_orig, cmap='winter')
     plot_svm(w, b[0], X, y_orig)
     plt.show()
+    """
+    
+    # Plot C-Values -> change ax to plt in plot_svm()
 
+
+    fig = plt.figure(figsize=(12, 8))
+    fig.add_subplot(121)
+    X, y = make_blobs(n_samples=200, centers=2, n_features=2, random_state=1, shuffle=True, cluster_std=4)
+
+    y[y == 0] = -1
+    y_orig = y
+
+    y = y.reshape(-1, 1).astype(float)
+
+    svm = SVM(C=10000)
+    svm.fit(X, y)
+    a, w, S, b = svm.get_results()
+
+    plt.scatter(X[:, 0], X[:, 1], c=y_orig, cmap='winter')
+    plot_svm(w, b[0], X, y_orig)
+    plt.title('C=10000')
+
+    fig.add_subplot(122)
+    X, y = make_blobs(n_samples=200, centers=2, n_features=2, random_state=1, shuffle=True, cluster_std=4)
+
+    y[y == 0] = -1
+    y_orig = y
+
+    y = y.reshape(-1, 1).astype(float)
+
+    svm = SVM(C=.1)
+    svm.fit(X, y)
+    a, w, S, b = svm.get_results()
+    plt.scatter(X[:, 0], X[:, 1], c=y_orig, cmap='winter')
+    plot_svm(w, b[0], X, y_orig)
+    plt.title('C=0.1')
+
+    plt.show()
+    """
     # RBF 3D plot
     rbf = SVM(kernel='gaussian-kernel')
     rbf.fit(X, y)
