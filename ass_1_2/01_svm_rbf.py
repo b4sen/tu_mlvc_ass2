@@ -186,7 +186,6 @@ if __name__ == '__main__':
     # res = svm.discriminant(a, b[0], X, y, [-1., 0.])
     # print(res)
 
-
     # LINEAR
     fig = plt.figure(figsize=(8, 8))
     ax = plt.axes(projection='3d')
@@ -215,6 +214,6 @@ if __name__ == '__main__':
     fig = plt.figure(figsize=(8, 8))
     ax = plt.axes()
     A, B, C = rbf.calc_contour(X, y)
-    ax.contour(A, B, C, alpha=0.3)
+    ax.contour(A, B, C)
     ax.scatter(X[:, 0], X[:, 1], c=y_orig, cmap='winter')
     plt.show()
