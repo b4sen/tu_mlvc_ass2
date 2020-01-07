@@ -12,9 +12,9 @@ class SVM:
     KERNEL_DICT = {
         'linear': lambda x, y: np.dot(x, y),
         # GAUSSIAN RBF
-        'gaussian-rbf': lambda x, y, s=1: np.exp(-np.linalg.norm(x - y)**2 / (2 * (s ** 2))),
-        # POLYNOMIAL RBF
-        'polynomial-rbf': lambda x, y, p: (np.dot(x, y) + 1) ** p
+        'gaussian-kernel': lambda x, y, s=1: np.exp(-np.linalg.norm(x - y)**2 / (2 * (s ** 2))),
+        # POLYNOMIAL KERNEL
+        'polynomial-kernel': lambda x, y, p: (np.dot(x, y) + 1) ** p
     }
 
     def __init__(self, kernel=None, C=None):
